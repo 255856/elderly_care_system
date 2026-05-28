@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>老年人管理 - 智慧养老系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #f0f2f5;
+        }
+        .navbar {
+            background: {{ system_config.navbar_color | default('linear-gradient(135deg, #667eea 0%, #764ba2 100%)') | safe }};
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 20px; font-weight: bold; }
+        .user-info { display: flex; align-items: center; gap: 20px; }
+        .nav-link { color: white; text-decoration: none; padding: 8px 15px; border-radius: 5px; }
+        .nav-link:hover { background: rgba(255,255,255,0.2); }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 60px;
+            width: 250px;
+            height: calc(100% - 54px);
+            background: white;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 20px 0;
+        }
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background: #f0f0ff;
+            border-left-color: #764ba2;
+            color: #764ba2;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .page-header h2 { color: #333; }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .search-bar button {
+            padding: 10px 20px;
+            background: #764ba2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .btn-add {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+        tr:hover { background: #fafafa; }
+
+        .btn-edit, .btn-delete {
+            padding: 5px 10px;
+            margin: 0 3px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-edit { background: #ffc107; color: #333; }
+        .btn-delete { background: #dc3545; color: white; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            width: 500px;
+            margin: 50px auto;
+            padding: 25px;
+            border-radius: 15px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        .modal-content h3 { margin-bottom: 20px; color: #764ba2; }
+        .modal-content input, .modal-content select, .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn-save { background: #764ba2; color: white; }
+        .btn-cancel { background: #6c757d; color: white; }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .pagination button {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+        }
+        .pagination button.active {
+            background: #764ba2;
+            color: white;
+            border-color: #764ba2;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-size: 12px;
+            margin-left: 250px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">🏠 智慧养老系统</div>
+        <div class="user-info">
+            <span>欢迎，{{ user.name }}</span>
+            <a href="/auth/logout" class="nav-link">退出</a>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="/dashboard">📊 仪表板</a></li>
+            <li><a href="/elderly" class="active">👴 老年人管理</a></li>
+            <li><a href="/staff">👩‍💼 工作人员管理</a></li>
+            <li><a href="/volunteer">🤝 义工管理</a></li>
+            <li><a href="/monitor">📷 智能监控</a></li>
+            <li><a href="/report">📈 报表统计</a></li>
+            <li><a href="/alerts">⚠️ 告警记录</a></li>
+            <li><a href="/settings">⚙️ 系统设置</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h2>👴 老年人管理</h2>
+            <button class="btn-add" onclick="openAddModal()">+ 添加老年人</button>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="searchKeyword" placeholder="搜索姓名/身份证/电话..." onkeyup="searchElderly()">
+            <button onclick="searchElderly()">搜索</button>
+        </div>
+
+        <table id="elderlyTable">
+            <thead>
+                <tr><th>ID</th><th>姓名</th><th>性别</th><th>年龄</th><th>电话</th><th>房间号</th><th>操作</th></tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="7" style="text-align:center">加载中...</td></tr>
+            </tbody>
+        </table>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <footer>
+        <p>智慧养老系统 v1.0 | 让科技温暖夕阳红</p>
+    </footer>
+
+    <!-- 添加/编辑模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">添加老年人</h3>
+            <input type="hidden" id="editId">
+            <input type="text" id="name" placeholder="姓名*">
+            <select id="gender"><option value="男">男</option><option value="女">女</option></select>
+            <input type="number" id="age" placeholder="年龄">
+            <input type="text" id="idCard" placeholder="身份证号">
+            <input type="text" id="phone" placeholder="电话">
+            <input type="text" id="emergencyContact" placeholder="紧急联系人">
+            <input type="text" id="emergencyPhone" placeholder="紧急联系电话">
+            <textarea id="address" placeholder="住址" rows="2"></textarea>
+            <textarea id="healthStatus" placeholder="健康状况" rows="2"></textarea>
+            <input type="text" id="roomNumber" placeholder="房间号">
+            <input type="date" id="admissionDate" placeholder="入住日期">
+            <div class="modal-buttons">
+                <button class="btn-save" onclick="saveElderly()">保存</button>
+                <button class="btn-cancel" onclick="closeModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+
+        // 加载列表
+        async function loadList() {
+            const keyword = document.getElementById('searchKeyword').value;
+            const response = await fetch(`/elderly/list?page=${currentPage}&keyword=${encodeURIComponent(keyword)}`);
+            const data = await response.json();
+
+            totalPages = data.pages;
+            renderTable(data.items);
+            renderPagination();
+        }
+
+        // 渲染表格
+        function renderTable(items) {
+            const tbody = document.getElementById('tableBody');
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">暂无数据</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td>${item.id}</td>
+                    <td>${item.name || '-'}</td>
+                    <td>${item.gender || '-'}</td>
+                    <td>${item.age || '-'}</td>
+                    <td>${item.phone || '-'}</td>
+                    <td>${item.room_number || '-'}</td>
+                    <td>
+                        <button class="btn-edit" onclick="openEditModal(${item.id})">编辑</button>
+                        <button class="btn-delete" onclick="deleteElderly(${item.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 渲染分页
+        function renderPagination() {
+            const container = document.getElementById('pagination');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            loadList();
+        }
+
+        function searchElderly() {
+            currentPage = 1;
+            loadList();
+        }
+
+        // 打开添加模态框
+        function openAddModal() {
+            document.getElementById('modalTitle').innerText = '添加老年人';
+            document.getElementById('editId').value = '';
+            clearForm();
+            document.getElementById('modal').style.display = 'block';
+        }
+
+        // 打开编辑模态框
+        async function openEditModal(id) {
+            const response = await fetch(`/elderly/${id}`);
+            const data = await response.json();
+
+            document.getElementById('modalTitle').innerText = '编辑老年人';
+            document.getElementById('editId').value = id;
+            document.getElementById('name').value = data.name || '';
+            document.getElementById('gender').value = data.gender || '男';
+            document.getElementById('age').value = data.age || '';
+            document.getElementById('idCard').value = data.id_card || '';
+            document.getElementById('phone').value = data.phone || '';
+            document.getElementById('emergencyContact').value = data.emergency_contact || '';
+            document.getElementById('emergencyPhone').value = data.emergency_phone || '';
+            document.getElementById('address').value = data.address || '';
+            document.getElementById('healthStatus').value = data.health_status || '';
+            document.getElementById('roomNumber').value = data.room_number || '';
+            document.getElementById('admissionDate').value = data.admission_date || '';
+
+            document.getElementById('modal').style.display = 'block';
+        }
+
+        function clearForm() {
+            document.getElementById('name').value = '';
+            document.getElementById('gender').value = '男';
+            document.getElementById('age').value = '';
+            document.getElementById('idCard').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('emergencyContact').value = '';
+            document.getElementById('emergencyPhone').value = '';
+            document.getElementById('address').value = '';
+            document.getElementById('healthStatus').value = '';
+            document.getElementById('roomNumber').value = '';
+            document.getElementById('admissionDate').value = '';
+        }
+
+        // 保存
+        async function saveElderly() {
+            const id = document.getElementById('editId').value;
+            const data = {
+                name: document.getElementById('name').value,
+                gender: document.getElementById('gender').value,
+                age: parseInt(document.getElementById('age').value) || null,
+                id_card: document.getElementById('idCard').value,
+                phone: document.getElementById('phone').value,
+                emergency_contact: document.getElementById('emergencyContact').value,
+                emergency_phone: document.getElementById('emergencyPhone').value,
+                address: document.getElementById('address').value,
+                health_status: document.getElementById('healthStatus').value,
+                room_number: document.getElementById('roomNumber').value,
+                admission_date: document.getElementById('admissionDate').value
+            };
+
+            const url = id ? `/elderly/update/${id}` : '/elderly/create';
+            const method = id ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert(result.message);
+                closeModal();
+                loadList();
+            } else {
+                alert('操作失败: ' + result.message);
+            }
+        }
+
+        // 删除
+        async function deleteElderly(id) {
+            if (!confirm('确定要删除吗？')) return;
+
+            const response = await fetch(`/elderly/delete/${id}`, {method: 'DELETE'});
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                loadList();
+            } else {
+                alert('删除失败: ' + result.message);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target === modal) closeModal();
+        }
+
+        // 初始化
+        loadList();
+                // 应用自定义导航栏颜色
+        (function applyCustomNavbar() {
+            const savedColor = localStorage.getItem('navbar_color');
+            if (savedColor) {
+                document.querySelectorAll('.navbar').forEach(nav => {
+                    nav.style.background = savedColor;
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

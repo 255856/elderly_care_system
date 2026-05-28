@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>智慧养老系统 - 首页</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* 背景层：独立于内容，支持淡入过渡 */
+        #bg-layer {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.25s ease-in-out;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        #bg-layer.loaded { opacity: 1; }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #ffffff; /* 兜底深色，避免加载前白屏 */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            margin: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        h1 { color: #764ba2; font-size: 42px; margin-bottom: 20px; }
+        .subtitle { color: #666; font-size: 18px; margin-bottom: 30px; }
+        .features {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .feature { padding: 15px; margin: 10px; }
+        .feature-icon { font-size: 40px; display: block; margin-bottom: 10px; }
+        .btn-group { margin-top: 20px; }
+        .btn {
+            background: #764ba2; color: white; padding: 12px 30px;
+            text-decoration: none; border-radius: 25px; display: inline-block;
+            margin: 5px 10px; transition: transform 0.3s;
+        }
+        .btn:hover { transform: scale(1.05); background: #5a3a7a; }
+        .btn-outline {
+            background: transparent; border: 2px solid #764ba2; color: #764ba2;
+        }
+        .btn-outline:hover { background: #764ba2; color: white; }
+        footer { margin-top: 30px; color: #999; font-size: 12px; }
+
+        /* 背景设置按钮与弹窗 */
+        .bg-settings-btn {
+            position: fixed; bottom: 25px; right: 25px; width: 50px; height: 50px;
+            background: white; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 22px; z-index: 999; transition: transform 0.3s;
+        }
+        .bg-settings-btn:hover { transform: scale(1.1); }
+
+        .bg-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .bg-modal-content {
+            background: white; width: 420px; max-width: 90%; padding: 30px;
+            border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .bg-modal-content h3 { color: #764ba2; margin-bottom: 20px; text-align: center; }
+        .bg-option { margin-bottom: 20px; }
+        .bg-option label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        .bg-option input[type="file"], .bg-option input[type="text"] {
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;
+        }
+        .preset-gradients { display: flex; gap: 10px; flex-wrap: wrap; }
+        .preset { width: 70px; height: 45px; border-radius: 8px; cursor: pointer; border: 3px solid transparent; transition: transform 0.2s; }
+        .preset:hover { transform: scale(1.05); border-color: #764ba2; }
+        .bg-preview { width: 100%; height: 100px; border-radius: 10px; margin: 15px 0; background-size: cover; background-position: center; border: 1px solid #ddd; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .modal-buttons button { padding: 8px 20px; border: none; border-radius: 8px; cursor: pointer; }
+        .btn-primary { background: #764ba2; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .info-text { color: #999; font-size: 12px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <!-- 独立背景层 -->
+    <div id="bg-layer"></div>
+
+    <div class="container">
+        <h1>🏠 智慧养老系统</h1>
+        <p class="subtitle">让科技温暖夕阳红</p>
+        <div class="features">
+            <div class="feature"><span class="feature-icon">👴</span><div>老人关怀</div></div>
+            <div class="feature"><span class="feature-icon">🤝</span><div>义工服务</div></div>
+            <div class="feature"><span class="feature-icon">📷</span><div>智能监控</div></div>
+            <div class="feature"><span class="feature-icon">📊</span><div>数据分析</div></div>
+        </div>
+        <div class="btn-group">
+            <a href="/auth/login?force=1" class="btn">🔐 登录系统</a>
+        </div>
+        <footer>
+            <p>智慧养老系统 v1.0 | 为老年人提供全方位的关怀服务</p>
+        </footer>
+    </div>
+
+    <div class="bg-settings-btn" onclick="openBgModal()" title="自定义背景">🎨</div>
+
+    <div id="bgModal" class="bg-modal" onclick="closeBgModalOutside(event)">
+        <div class="bg-modal-content" onclick="event.stopPropagation()">
+            <h3>🎨 自定义首页背景</h3>
+            <div class="bg-option">
+                <label>上传本地图片</label>
+                <input type="file" id="bgUpload" accept="image/*" onchange="handleBgUpload(this)">
+                <div class="info-text">支持 png, jpg, jpeg, gif, webp，最大 5MB</div>
+            </div>
+            <div class="bg-option">
+                <label>或输入图片链接</label>
+                <input type="text" id="bgUrl" placeholder="https://example.com/background.jpg">
+                <button class="btn-primary" style="margin-top:8px; width:100%;" onclick="applyBgUrl()">应用链接</button>
+            </div>
+            <div class="bg-option">
+                <label>选择预设渐变</label>
+                <div class="preset-gradients">
+                    <div class="preset" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" onclick="applyGradient('linear-gradient(135deg, #667eea 0%, #764ba2 100%)')" title="默认紫蓝"></div>
+                    <div class="preset" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);" onclick="applyGradient('linear-gradient(135deg, #f093fb 0%, #f5576c 100%)')" title="粉红"></div>
+                    <div class="preset" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);" onclick="applyGradient('linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)')" title="天蓝"></div>
+                    <div class="preset" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);" onclick="applyGradient('linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)')" title="翠绿"></div>
+                    <div class="preset" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);" onclick="applyGradient('linear-gradient(135deg, #fa709a 0%, #fee140 100%)')" title="暖橙"></div>
+                    <div class="preset" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);" onclick="applyGradient('linear-gradient(135deg, #30cfd0 0%, #330867 100%)')" title="深海"></div>
+                    <div class="preset" style="background: #2c3e50;" onclick="applyGradient('#2c3e50')" title="深蓝"></div>
+                    <div class="preset" style="background: #e74c3c;" onclick="applyGradient('#e74c3c')" title="红色"></div>
+                    <div class="preset" style="background: #27ae60;" onclick="applyGradient('#27ae60')" title="绿色"></div>
+                    <div class="preset" style="background: #8e44ad;" onclick="applyGradient('#8e44ad')" title="紫色"></div>
+                </div>
+            </div>
+            <div class="bg-preview" id="bgPreview"></div>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="resetBg()">恢复默认</button>
+                <button class="btn-danger" onclick="closeBgModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const bgLayer = document.getElementById('bg-layer');
+
+        // 统一应用背景：图片预加载后再淡入，渐变直接淡入
+        function applyBackground(bgValue, isImage = false) {
+            bgLayer.classList.remove('loaded'); // 先淡出
+
+            if (!isImage) {
+                // 纯色/渐变直接应用
+                bgLayer.style.background = bgValue;
+                bgLayer.style.backgroundImage = 'none';
+                bgLayer.classList.add('loaded');
+                updatePreview();
+                return;
+            }
+
+            // 图片背景：先预加载，成功后再应用
+            const img = new Image();
+            img.onload = () => {
+                bgLayer.style.background = bgValue;
+                bgLayer.style.backgroundSize = 'cover';
+                bgLayer.style.backgroundPosition = 'center';
+                bgLayer.style.backgroundAttachment = 'fixed';
+                bgLayer.classList.add('loaded');
+                updatePreview();
+            };
+            img.onerror = () => {
+                console.error('背景图片加载失败:', bgValue);
+                // 加载失败时恢复默认渐变，避免黑屏
+                bgLayer.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                bgLayer.classList.add('loaded');
+                updatePreview();
+            };
+            // 提取 url(...) 中的地址
+            const match = bgValue.match(/url\(["']?([^"')]+)["']?\)/);
+            img.src = match ? match[1] : bgValue;
+        }
+
+        async function saveConfig(key, value) {
+            try {
+                const response = await fetch('/api/system-config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({key, value})
+                });
+                const result = await response.json();
+                if (!result.success && key === 'login_background') {
+                    localStorage.setItem('login_background_tmp', value);
+                }
+                return result;
+            } catch(e) {
+                if (key === 'login_background') {
+                    localStorage.setItem('login_background_tmp', value);
+                }
+                return {success: false, message: e.message};
+            }
+        }
+
+        function updatePreview() {
+            const preview = document.getElementById('bgPreview');
+            preview.style.background = bgLayer.style.background || getComputedStyle(bgLayer).background;
+            if (bgLayer.style.backgroundImage && bgLayer.style.backgroundImage !== 'none') {
+                preview.style.backgroundSize = 'cover';
+                preview.style.backgroundPosition = 'center';
+            }
+        }
+
+        async function handleBgUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('只支持 png, jpg, jpeg, gif, webp 格式');
+                input.value = '';
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                alert('图片大小不能超过5MB');
+                input.value = '';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch('/api/upload-login-bg', { method: 'POST', body: formData });
+                const result = await response.json();
+
+                if (result.success) {
+                    applyBackground(`url(${result.path})`, true);
+                    alert('背景图片已保存成功！');
+                } else {
+                    alert('上传失败: ' + result.message);
+                }
+            } catch (error) {
+                alert('上传失败: ' + error.message);
+            }
+        }
+
+        async function applyBgUrl() {
+            const url = document.getElementById('bgUrl').value.trim();
+            if (!url) { alert('请输入图片链接'); return; }
+
+            const bg = `url(${url})`;
+            const result = await saveConfig('login_background', bg);
+            applyBackground(bg, true);
+
+            if (result.success) {
+                alert('背景已保存成功！');
+            } else {
+                alert('背景已应用（临时保存，登录后会自动保存到数据库）');
+            }
+        }
+
+        async function applyGradient(gradient) {
+            const result = await saveConfig('login_background', gradient);
+            applyBackground(gradient, false);
+
+            if (result.success) {
+                alert('背景已保存成功！');
+            } else {
+                alert('背景已应用（临时保存，登录后会自动保存到数据库）');
+            }
+        }
+
+        async function resetBg() {
+            const defaultBg = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            const result = await saveConfig('login_background', defaultBg);
+            applyBackground(defaultBg, false);
+            document.getElementById('bgUrl').value = '';
+            document.getElementById('bgUpload').value = '';
+            alert(result.success ? '已恢复默认背景' : '已恢复默认背景（临时保存）');
+        }
+
+        function openBgModal() {
+            document.getElementById('bgModal').style.display = 'flex';
+            updatePreview();
+        }
+        function closeBgModal() {
+            document.getElementById('bgModal').style.display = 'none';
+        }
+        function closeBgModalOutside(event) {
+            if (event.target === document.getElementById('bgModal')) closeBgModal();
+        }
+
+        async function loadBackground() {
+            try {
+                const response = await fetch('/api/system-config');
+                const result = await response.json();
+                if (result.success && result.configs && result.configs.login_background) {
+                    const bg = result.configs.login_background;
+                    applyBackground(bg, bg.startsWith('url'));
+                } else {
+                    const tmpBg = localStorage.getItem('login_background_tmp');
+                    if (tmpBg) {
+                        applyBackground(tmpBg, tmpBg.startsWith('url'));
+                    } else {
+                        // 没有任何配置时显示默认渐变
+                        applyBackground('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', false);
+                    }
+                }
+            } catch (error) {
+                const tmpBg = localStorage.getItem('login_background_tmp');
+                if (tmpBg) {
+                    applyBackground(tmpBg, tmpBg.startsWith('url'));
+                } else {
+                    applyBackground('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', false);
+                }
+            }
+        }
+
+        // 页面加载即执行
+        loadBackground();
+    </script>
+</body>
+</html>

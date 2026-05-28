@@ -1,0 +1,18 @@
+Flask>=2.3,<4.0
+Flask-SQLAlchemy>=3.0,<4.0
+Flask-Login>=0.6,<1.0
+opencv-python>=4.8,<5.0
+numpy>=1.24,<2.0
+Pillow>=10.0,<12.0
+ultralytics>=8.0
+waitress>=2.1
+
+# 人脸识别（Windows 下推荐用 conda 安装 dlib）
+# conda install -c conda-forge dlib
+# 然后再 pip install face-recognition
+face-recognition>=1.4
+
+# 深度学习（可选，仅情感分析需要）
+# deepface>=0.0.79
+# tensorflow>=2.13
+# pandas>=2.0

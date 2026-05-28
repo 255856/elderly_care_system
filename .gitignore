@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environment
+venv/
+env/
+.venv/
+.conda/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Database files (auto-generated, keep only schema)
+*.db
+instance/
+
+# Model files (large binary, download separately)
+*.pt
+*.onnx
+*.h5
+*.pth
+*.weights
+
+# Generated runtime directories
+captures/
+uploads/
+backups/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Environment variables
+.env
+.env.local
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
