@@ -239,7 +239,7 @@ pip install face-recognition
 
 ## 贡献者
 
-陈吉春，尹志杰，陈欣荣，叶心怡
+初晓旬依
 
 ## 许可证
 
