@@ -615,9 +615,19 @@ def create_app():
         if not os.path.exists(db_path):
             db_path = os.path.join(base_dir, 'elderly_care.db')
         try:
+            # 先关闭当前数据库连接，否则覆盖文件后连接仍指向旧库
+            from web.models import db as _db
+            _db.session.remove()
+            _db.engine.dispose()
+
             shutil.copy2(temp_path, db_path)
             os.remove(temp_path)
-            return jsonify({'success': True, 'message': '恢复成功，请重启系统'})
+
+            # 重新加载数据到内存
+            load_faces_from_db()
+            _get_system().reload_known_faces()
+
+            return jsonify({'success': True, 'message': '数据恢复成功'})
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)})
 
