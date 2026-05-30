@@ -33,8 +33,11 @@ class User(UserMixin, db.Model):
         self.password = generate_password_hash(password)
 
     def check_password(self, password):
-        """验证密码"""
-        return check_password_hash(self.password, password)
+        """验证密码（兼容不支持的哈希方法）"""
+        try:
+            return check_password_hash(self.password, password)
+        except ValueError:
+            return False
 
     def get_id(self):
         """Flask-Login需要的方法"""

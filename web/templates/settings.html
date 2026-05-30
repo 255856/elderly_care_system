@@ -558,7 +558,7 @@ async function loadDetectionConfig() {
         formData.append('file', file);
         const response = await fetch('/api/restore', { method: 'POST', body: formData });
         const result = await response.json();
-        if (result.success) { alert('数据恢复成功'); location.reload(); }
+        if (result.success) { alert('数据恢复成功，请重新登录'); window.location.href = '/auth/logout'; }
         else { alert('恢复失败: ' + result.message); }
     }
 

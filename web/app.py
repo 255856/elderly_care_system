@@ -76,6 +76,86 @@ def load_faces_from_db():
         print(f"加载人脸数据失败: {e}")
 
 
+def _migrate_old_schema(db_path):
+    """将旧架构备份迁移到新架构（staff → users, alert → alerts 等）"""
+    import sqlite3 as _sqlite
+    conn = _sqlite.connect(db_path)
+    tables = [t[0] for t in conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'"
+    ).fetchall()]
+
+    need_migrate = 'staff' in tables and 'users' not in tables
+    if not need_migrate:
+        conn.close()
+        return
+
+    try:
+        # 1) 创建 users 表并迁移 staff 数据
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username VARCHAR(50) NOT NULL,
+                password VARCHAR(200) NOT NULL,
+                name VARCHAR(100) NOT NULL,
+                gender VARCHAR(10),
+                age INTEGER,
+                phone VARCHAR(20),
+                email VARCHAR(100),
+                role VARCHAR(50),
+                department VARCHAR(100),
+                avatar_path VARCHAR(200),
+                status VARCHAR(20) DEFAULT 'active',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.execute("""
+            INSERT INTO users (id, username, password, name, gender, age, phone,
+                               email, role, department, avatar_path, status, created_at)
+            SELECT id, username, password, name, gender, age, phone,
+                   email, role, department, avatar_path, status, created_at
+            FROM staff
+        """)
+        conn.execute("DROP TABLE staff")
+
+        # 2) 重命名 alert → alerts
+        if 'alert' in tables and 'alerts' not in tables:
+            conn.execute("ALTER TABLE alert RENAME TO alerts")
+
+        # 3) 重建已知人脸表
+        if 'known_face' in tables and 'face_records' not in tables:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS face_records (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    person_name VARCHAR(100) NOT NULL,
+                    person_type VARCHAR(50),
+                    person_id INTEGER,
+                    face_encoding TEXT,
+                    image_path VARCHAR(200),
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            try:
+                conn.execute("""
+                    INSERT INTO face_records (id, person_name, person_type, person_id,
+                                              face_encoding, image_path, created_at)
+                    SELECT id, person_name, person_type, person_id,
+                           face_encoding, image_path, created_at
+                    FROM known_face
+                """)
+                conn.execute("DROP TABLE known_face")
+            except Exception:
+                pass  # 列不匹配则跳过
+
+        conn.commit()
+        print("旧架构备份已迁移到新架构")
+    except Exception as e:
+        conn.rollback()
+        print(f"架构迁移失败: {e}")
+        raise
+    finally:
+        conn.close()
+
+
 def get_gpu_info():
     """获取 GPU 信息"""
     import torch
@@ -610,7 +690,7 @@ def create_app():
         if not file.filename.endswith('.db'):
             return jsonify({'success': False, 'message': '请选择.db备份文件'})
 
-        # 简单校验：检查 SQLite 文件头
+        # 校验：检查 SQLite 文件头
         header = file.read(16)
         file.seek(0)
         if header[:16] != b'SQLite format 3\x00':
@@ -620,6 +700,25 @@ def create_app():
         os.makedirs(backups_dir, exist_ok=True)
         temp_path = os.path.join(backups_dir, 'temp_restore.db')
         file.save(temp_path)
+
+        # 深度校验：检查备份文件包含必要的表
+        try:
+            import sqlite3 as _sqlite
+            _vconn = _sqlite.connect(temp_path)
+            _vtables = _vconn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ).fetchall()
+            _vconn.close()
+            _vtable_names = [t[0] for t in _vtables]
+            # 用户表兼容新旧架构：旧系统用 staff，新系统用 users
+            has_user_table = 'staff' in _vtable_names or 'users' in _vtable_names
+            if not has_user_table:
+                os.remove(temp_path)
+                return jsonify({'success': False,
+                                'message': '备份文件缺少用户表(staff/users)，可能已损坏'})
+        except Exception:
+            os.remove(temp_path)
+            return jsonify({'success': False, 'message': '无法读取备份文件，文件可能已损坏'})
 
         # 从 SQLAlchemy 引擎获取实际的数据库文件路径
         from web.models import db as _db
@@ -642,13 +741,16 @@ def create_app():
             shutil.copy2(temp_path, db_path)
             os.remove(temp_path)
 
+            # 迁移旧架构 → 新架构
+            _migrate_old_schema(db_path)
+
             # 重新建立连接并加载数据
             with app.app_context():
                 _db.create_all()
             load_faces_from_db()
             _get_system().reload_known_faces()
 
-            return jsonify({'success': True, 'message': '数据恢复成功'})
+            return jsonify({'success': True, 'message': '数据恢复成功，请重新登录'})
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)})
 
