@@ -578,9 +578,18 @@ def create_app():
         backups_dir = os.path.join(base_dir, 'backups')
         os.makedirs(backups_dir, exist_ok=True)
         backup_path = os.path.join(backups_dir, backup_filename)
-        db_path = os.path.join(base_dir, 'instance', 'elderly_care.db')
-        if not os.path.exists(db_path):
-            db_path = os.path.join(base_dir, 'elderly_care.db')
+
+        # 从 SQLAlchemy 引擎获取实际的数据库文件路径
+        from web.models import db as _db
+        db_url = str(_db.engine.url)
+        if db_url.startswith('sqlite:///'):
+            db_path = db_url[len('sqlite:///'):]
+            if db_path.startswith('/') and len(db_path) > 2 and db_path[2] == ':':
+                db_path = db_path[1:]
+        else:
+            db_path = os.path.join(app.instance_path, 'elderly_care.db')
+        db_path = os.path.normpath(db_path)
+
         try:
             if os.path.exists(db_path):
                 shutil.copy2(db_path, backup_path)
@@ -611,19 +620,31 @@ def create_app():
         os.makedirs(backups_dir, exist_ok=True)
         temp_path = os.path.join(backups_dir, 'temp_restore.db')
         file.save(temp_path)
-        db_path = os.path.join(base_dir, 'instance', 'elderly_care.db')
-        if not os.path.exists(db_path):
-            db_path = os.path.join(base_dir, 'elderly_care.db')
+
+        # 从 SQLAlchemy 引擎获取实际的数据库文件路径
+        from web.models import db as _db
+        db_url = str(_db.engine.url)
+        if db_url.startswith('sqlite:///'):
+            db_path = db_url[len('sqlite:///'):]
+            # Windows 绝对路径兼容: sqlite:///E:/path 或 sqlite:////E:/path
+            if db_path.startswith('/') and len(db_path) > 2 and db_path[2] == ':':
+                db_path = db_path[1:]  # 去掉前导 /
+        else:
+            db_path = os.path.join(app.instance_path, 'elderly_care.db')
+        db_path = os.path.normpath(db_path)
+
         try:
             # 先关闭当前数据库连接，否则覆盖文件后连接仍指向旧库
-            from web.models import db as _db
             _db.session.remove()
             _db.engine.dispose()
 
+            # 覆盖数据库文件
             shutil.copy2(temp_path, db_path)
             os.remove(temp_path)
 
-            # 重新加载数据到内存
+            # 重新建立连接并加载数据
+            with app.app_context():
+                _db.create_all()
             load_faces_from_db()
             _get_system().reload_known_faces()
 

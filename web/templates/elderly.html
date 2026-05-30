@@ -219,7 +219,7 @@
         </div>
 
         <div class="search-bar">
-            <input type="text" id="searchKeyword" placeholder="搜索姓名/身份证/电话..." onkeyup="searchElderly()">
+            <input type="text" id="searchKeyword" placeholder="搜索姓名/身份证/电话..." onkeyup="searchElderly()" autocomplete="off">
             <button onclick="searchElderly()">搜索</button>
         </div>
 
@@ -433,6 +433,7 @@
 
         // 初始化
         loadList();
+        document.getElementById('searchKeyword').value = '';
                 // 应用自定义导航栏颜色
         (function applyCustomNavbar() {
             const savedColor = localStorage.getItem('navbar_color');

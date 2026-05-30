@@ -54,18 +54,24 @@ def create():
     """添加老年人"""
     data = request.get_json()
 
+    if not data.get('name', '').strip():
+        return jsonify({'success': False, 'message': '姓名不能为空'}), 400
+
     try:
+        # 空字符串转为 None，避免 unique 约束冲突
+        id_card = data.get('id_card', '').strip() or None
+
         elderly = Elderly(
-            name=data.get('name'),
+            name=data.get('name', '').strip(),
             gender=data.get('gender'),
-            age=data.get('age'),
-            id_card=data.get('id_card'),
-            phone=data.get('phone'),
-            emergency_contact=data.get('emergency_contact'),
-            emergency_phone=data.get('emergency_phone'),
-            address=data.get('address'),
-            health_status=data.get('health_status'),
-            room_number=data.get('room_number'),
+            age=data.get('age') if data.get('age') else None,
+            id_card=id_card,
+            phone=data.get('phone', '').strip() or None,
+            emergency_contact=data.get('emergency_contact', '').strip() or None,
+            emergency_phone=data.get('emergency_phone', '').strip() or None,
+            address=data.get('address', '').strip() or None,
+            health_status=data.get('health_status', '').strip() or None,
+            room_number=data.get('room_number', '').strip() or None,
             admission_date=datetime.strptime(data.get('admission_date'), '%Y-%m-%d') if data.get(
                 'admission_date') else None
         )
@@ -91,6 +97,8 @@ def update(id):
             if hasattr(elderly, key) and value is not None:
                 if key == 'admission_date' and value:
                     value = datetime.strptime(value, '%Y-%m-%d')
+                if key == 'id_card' and isinstance(value, str) and value.strip() == '':
+                    value = None
                 setattr(elderly, key, value)
 
         db.session.commit()

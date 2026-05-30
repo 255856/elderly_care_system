@@ -230,7 +230,7 @@
         </div>
 
         <div class="search-bar">
-            <input type="text" id="searchKeyword" placeholder="搜索姓名/用户名/电话..." onkeyup="searchStaff()">
+            <input type="text" id="searchKeyword" placeholder="搜索姓名/用户名/电话..." onkeyup="searchStaff()" autocomplete="off">
             <button onclick="searchStaff()">搜索</button>
         </div>
 
@@ -464,6 +464,7 @@
         }
 
         loadList();
+        document.getElementById('searchKeyword').value = '';
                 // 应用自定义导航栏颜色
         (function applyCustomNavbar() {
             const savedColor = localStorage.getItem('navbar_color');
